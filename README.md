@@ -1,23 +1,6 @@
-# Stock prediction agent (free stack)
+# Stock prediction agent 
 
-Runs your existing price/volume model plus a free news-sentiment veto,
-tracks a minimum 2-trading-day hold per position, and sends a Telegram
-notification with what it would buy or sell. It does not place real
-trades - it only recommends.
-
-## What changed vs. the original script
-
-- **Leak fix**: `score_ticker()` in `agent.py` trains the model on all
-  rows *except* the most recent one, then scores that held-out row.
-  In the original script, the model was trained on the same row it
-  then predicted on, which inflates confidence artificially.
-- **Batched price fetch**: one `yf.download()` call for the whole
-  candidate universe instead of one request per ticker.
-- **News fetched only for model-flagged tickers**: RSS lookups happen
-  after the price model has already narrowed the list, not for all
-  ~500 tickers every run - keeps runtime and request volume down.
-
-## Setup (all free)
+## Setup 
 
 1. **Create a Telegram bot**
    - Message `@BotFather` on Telegram, run `/newbot`, follow the prompts.
