@@ -1,0 +1,10 @@
+yfinance
+pandas
+numpy
+xgboost
+scikit-learn
+imbalanced-learn
+beautifulsoup4
+requests
+feedparser
+vaderSentiment
