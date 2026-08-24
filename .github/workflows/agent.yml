@@ -1,0 +1,39 @@
+name: Stock agent run
+
+on:
+  schedule:
+    # 21:30 UTC = 4:30pm ET during EST (5:30pm during EDT) - roughly
+    # after US market close. Cron doesn't know about DST, so this
+    # will drift an hour for part of the year; adjust if it matters.
+    - cron: "59 18 * * 1-5"
+  workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
+
+permissions:
+  contents: write   # needed to commit the updated state.json back
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run agent
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python agent.py
+
+      - name: Commit updated state
+        run: |
+          git config user.name "stock-agent-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add state.json sp500.txt || true
+          git diff --quiet --cached || git commit -m "Update agent state [skip ci]"
+          git push
