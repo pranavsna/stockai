@@ -5,7 +5,7 @@ on:
     # 21:30 UTC = 4:30pm ET during EST (5:30pm during EDT) - roughly
     # after US market close. Cron doesn't know about DST, so this
     # will drift an hour for part of the year; adjust if it matters.
-    - cron: "0 */0.1 * * 1-5"
+    - cron: "*/7 * * * 1-5"
   workflow_dispatch: {}   # lets you trigger a run manually from the Actions tab
 
 permissions:
