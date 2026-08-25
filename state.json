@@ -439,9 +439,17 @@
       "mode": "long_horizon",
       "queued_at": "2026-08-25T11:46:56.651085",
       "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "HWM",
+      "dollar_amount": 20000.0,
+      "rationale": "Price model: 98% confidence (mode: core). News sentiment positive (+0.26). Technicals lean bullish (score 0.69). Sample headline: \"Do Howmet's Strong Q2 Margins Signal Further Upside for the Stock?\"",
+      "mode": "core",
+      "queued_at": "2026-08-25T13:15:08.472517",
+      "target_time": "2026-08-25T09:30:00-04:00"
     }
   ],
   "meta": {
-    "run_counter": 18
+    "run_counter": 19
   }
 }
