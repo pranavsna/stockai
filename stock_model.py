@@ -55,11 +55,16 @@ def get_historical_constituents(date, current_tickers):
 # FEATURE ENGINEERING (shared by live + backtest paths)
 # =========================================================
 
-def compute_features_from_hist(hist):
+def compute_features_from_hist(hist, horizon=2):
     """
     Takes a raw OHLCV history DataFrame (as returned by yfinance)
     and returns (data, full_predictors), or (empty df, None) if
     there isn't enough data to build features.
+
+    `horizon` is how many trading days ahead the Target label looks.
+    Default is 2 (matches the original model). The discovery module
+    uses a larger horizon (e.g. 10) to train a variant of the model
+    aimed at longer-term moves instead of just the 2-day signal.
 
     This is factored out so both the live path (fetch_and_prepare_data)
     and the backtest path (which batch-downloads history for many
@@ -73,17 +78,17 @@ def compute_features_from_hist(hist):
         columns={'Close': 'Actual_Close'}
     )
 
-    # Predicting 2-day forward price movement.
+    # Predicting `horizon`-day forward price movement.
     #
-    # FIX: hist["Close"].shift(-2) is NaN for the last 2 rows.
-    # `NaN > x` evaluates to False in pandas, so casting straight
+    # FIX: hist["Close"].shift(-horizon) is NaN for the last `horizon`
+    # rows. `NaN > x` evaluates to False in pandas, so casting straight
     # to int previously turned "we don't know yet" into a hard,
-    # fabricated "Decrease" (0) label for the 2 most recent rows.
+    # fabricated "Decrease" (0) label for the most recent rows.
     # Those rows are also the ones closest to whatever date you're
     # predicting on, so they got trained on with a wrong label.
     # Explicitly mask them as NaN instead, and let dropna() remove
     # them like every other incomplete row.
-    future_close = hist["Close"].shift(-2)
+    future_close = hist["Close"].shift(-horizon)
     target = np.where(
         future_close.isna(),
         np.nan,
@@ -208,12 +213,12 @@ def compute_features_from_hist(hist):
     return data, full_predictors
 
 
-def fetch_and_prepare_data(ticker):
+def fetch_and_prepare_data(ticker, horizon=2):
     hist = yf.Ticker(ticker).history(
         period="5y",
         interval="1d"
     )
-    return compute_features_from_hist(hist)
+    return compute_features_from_hist(hist, horizon=horizon)
 
 
 # =========================================================

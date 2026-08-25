@@ -1,66 +1,134 @@
-# Stock prediction agent 
+# Stock prediction agent v2 - Alpaca paper trading + rotating discovery
 
-## Setup 
+Runs a price model + free news sentiment + technicals, sizes and places
+real (paper) trades via Alpaca, tracks a minimum 2-trading-day hold per
+position but decides exits on its own after that, and rotates between
+three discovery strategies since it now runs every 20-30 minutes.
 
-1. **Create a Telegram bot**
-   - Message `@BotFather` on Telegram, run `/newbot`, follow the prompts.
-   - You'll get a token like `123456789:AAExxxxxxxxxxxxxxxxxxxx`.
-   - Send your new bot any message so it knows your chat.
-   - Visit `https://api.telegram.org/bot<TOKEN>/getUpdates` in a browser
-     and copy the `chat.id` value.
+## What's new vs. the first version
 
-2. **Push this folder to a GitHub repo** (public repos get unlimited
-   free Actions minutes; private repos get a generous free monthly
-   quota).
+1. **Telegram message now lists current holdings** - ticker, entry
+   date, live P/L, and whether it's eligible to sell yet or when it
+   will be.
+2. **Real paper trading via Alpaca**, free. Orders only execute while
+   the market is open; if a buy decision is made while it's closed,
+   it's queued as a **deferred order** and shown in its own message
+   section, then submitted automatically once the market opens.
+3. **Position sizing is dynamic**, not fixed - each buy is sized as a
+   share of current account cash, weighted by a composite score
+   (model confidence + sentiment + technicals), capped at 20% of
+   equity per position and floored at $250 so orders aren't trivially
+   small.
+4. **Exits are rule-based and independent of the 2-day mark** - a
+   stop-loss (-8%) or take-profit (+15%) can fire at any time, but is
+   only executed once the 2-trading-day minimum hold has passed.
+   Until then it's reported as "flagged, waiting on hold."
+5. **Three rotating discovery modes** so each 20-30 minute run isn't
+   redoing identical work: `core` (2-day model, same as before),
+   `long_horizon` (~10-day model with lighter hyperparameters, aimed
+   at longer setups), and `news_discovery` (scans general market news
+   for which S&P 500 names are getting unusual headline volume, then
+   scores just that shortlist).
+6. **Composite reasoning with a written rationale** per candidate -
+   free by default (rule-based template), optionally upgraded to an
+   actual Claude Haiku-written judgment if you set `ANTHROPIC_API_KEY`
+   (small per-call cost, not free - see caveat below).
 
-3. **Add repo secrets** (Settings → Secrets and variables → Actions):
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
+## Being straight about point 5 (from your last message)
 
-4. **Adjust the schedule** in `.github/workflows/agent.yml` if you
-   want a different run time - cron doesn't handle DST, so the UTC
-   offset will drift by an hour for part of the year.
+You asked for something that can "make logical decisions on its own,"
+not just run the model and buy on a threshold. What's built here is a
+multi-factor composite score (model probability + sentiment +
+technical trend) with a generated rationale - that's real, and it's
+more than the v1 threshold-only logic. But it's still fundamentally
+rule-based unless you enable the optional Claude API hook. A system
+that's actually reasoning about a thesis, weighing conflicting
+evidence, and explaining trade-offs the way a person would needs an
+LLM in the loop - that's not free at any real usage volume, though
+Haiku is cheap. The default path here works with zero added cost;
+flip on `ANTHROPIC_API_KEY` if you want the qualitative upgrade.
 
-5. Commit and push. The workflow also has `workflow_dispatch`, so you
-   can trigger a manual run from the Actions tab to test before
-   waiting for the schedule.
+## Setup (mostly free)
+
+### 1. Alpaca paper trading account (free)
+- Sign up at https://alpaca.markets, go to the Paper Trading dashboard.
+- Generate a paper API key/secret pair.
+- **Starting balance**: Alpaca paper accounts default to $100,000, and
+  the trading API doesn't support setting a custom starting balance
+  via code. To start at $10,000 as you wanted, use the dashboard's
+  "Reset Account" option and choose $10,000 before the first run. The
+  agent always reads your *actual* balance from Alpaca for sizing, so
+  it'll work correctly whatever you set it to.
+
+### 2. Telegram bot (free) - same as before
+- `@BotFather` -> `/newbot` -> get a token.
+- Message the bot once, then hit
+  `https://api.telegram.org/bot<TOKEN>/getUpdates` to find your chat id.
+
+### 3. (Optional, small cost) Anthropic API key
+- Only needed if you want the LLM-written rationale instead of the
+  free template. Skip this entirely and the agent works fine.
+
+### 4. Repo secrets
+Add these under Settings -> Secrets and variables -> Actions:
+- `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`
+- `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`
+- `ANTHROPIC_API_KEY` (optional)
+
+### 5. Schedule
+`.github/workflows/agent.yml` runs every 25 minutes, roughly across
+market hours in UTC. Adjust the cron if you want tighter/looser
+coverage - see the comment in the file about DST drift.
 
 ## Local test run
 
 ```bash
 pip install -r requirements.txt
-python agent.py --dry-run    # scores and notifies but doesn't touch state.json
+python agent.py --dry-run    # scores and would-buy/sell but places no orders, doesn't touch state.json
 ```
 
 ## Files
 
-- `stock_model.py` - your original feature engineering + model training,
-  unchanged, minus the old sequential live-prediction path (replaced
-  by the batched version in `agent.py`).
-- `news_sentiment.py` - free RSS headline fetch (Yahoo Finance + Google
-  News) and VADER sentiment scoring.
-- `position_tracker.py` - JSON-file state, enforces the 2-trading-day
-  minimum hold between buy and sell.
-- `notifier.py` - Telegram message sending and formatting.
+- `stock_model.py` - feature engineering + model training. Now accepts
+  a `horizon` parameter so `long_horizon` mode can reuse it with a
+  different label window.
+- `alpaca_trader.py` - thin wrapper over Alpaca's paper trading API:
+  account, market clock, positions, buy (notional/dollar-based),
+  sell (closes full position).
+- `discovery.py` - the three rotating discovery strategies.
+- `reasoning.py` - composite scoring + rationale generation, with the
+  optional Claude Haiku hook.
+- `news_sentiment.py` - free RSS + VADER sentiment (unchanged from v1).
+- `position_tracker.py` - state.json: per-position metadata (entry
+  date, min sell date, rationale, mode) and the deferred-order queue.
+  Alpaca itself remains the source of truth for what's actually held.
+- `notifier.py` - Telegram formatting, now with holdings/deferred/exit
+  sections.
 - `agent.py` - orchestrates all of the above for one run.
-- `.github/workflows/agent.yml` - free scheduled runner via GitHub Actions.
 
 ## Known limitations, worth knowing before trusting output
 
-- **Sentiment is a coarse veto, not a strong signal.** VADER is a
-  general-purpose rule-based scorer, not tuned for financial text. It
-  can misread sarcasm, negation, or finance-specific phrasing. Treat
-  it as "don't buy into an obvious wall of bad headlines," not as
-  real signal.
-- **`yfinance` data is free but delayed and rate-limited.** Fine for
-  a once- or twice-daily signal; not suitable for anything time-sensitive.
-- **The 2-day hold uses calendar-day math that skips weekends**, not
-  true NYSE trading-day/holiday accounting - it'll be off by a day
-  around market holidays.
-- **Survivorship bias and the original 2-day feature-label lag**
-  (discussed earlier) still apply to the underlying model - this
-  agent wraps the model, it doesn't change its statistical properties.
-- **This is not financial advice**, and nothing here guarantees the
-  model's historical behavior (even after the leak fix) will hold up
-  on future, live data. Consider paper-trading the recommendations
-  for a while before acting on them with real money.
+- **Exit rules are simple thresholds** (stop-loss/take-profit on
+  unrealized P/L), not a re-evaluation of the original thesis. A
+  position could hit neither threshold and just be quietly wrong for
+  a long time; there's no "the setup broke" logic beyond price moving
+  against you by a set amount.
+- **The 2-trading-day hold uses calendar-day math that skips
+  weekends**, not true NYSE trading-day/holiday accounting.
+- **`long_horizon` mode's ~0.90 probability threshold isn't directly
+  comparable to `core`'s 0.95** - they're different models with
+  different label distributions, not the same confidence scale.
+- **`news_discovery`'s ticker extraction is a crude substring match**
+  against known tickers in headline text - it'll miss anything
+  referenced only by company name, and can occasionally false-positive
+  on short tickers that double as common words/acronyms.
+- **Running every 20-30 minutes means ~20-25 runs/day.** Each run
+  does a batched full-universe fetch via yfinance in `core`/
+  `long_horizon` modes - watch for rate-limiting if you shorten the
+  interval further, and consider setting `MAX_UNIVERSE` in `agent.py`
+  if runs start taking too long for the Actions time limit.
+- **This is paper trading only.** Nothing here places real orders, and
+  none of it is financial advice. Historical/backtest behavior,
+  including with the earlier leak fix, still doesn't guarantee live
+  results - the composite score and exit thresholds are reasonable
+  starting points, not tuned/validated defaults.

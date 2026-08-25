@@ -1,179 +1,339 @@
 """
-Daily agent run.
+Main agent run - designed to run every 20-30 minutes via GitHub
+Actions during market hours.
 
-For each candidate ticker (i.e. not already held within its 2-day
-hold window):
-  1. Fetch price history, compute features (existing pipeline).
-  2. Train the model on all rows EXCEPT the most recent one, then
-     score that held-out most-recent row. This is the fix from
-     the earlier leak discussion: the row being scored must never
-     appear in the training set.
-  3. Fetch recent news headlines and score sentiment (free, VADER).
-  4. Buy only if the model says "increase" AND sentiment isn't
-     clearly negative (a simple veto filter, not a second vote).
+Each run always does two things:
+  1. POSITION MONITORING - checks every currently-held Alpaca paper
+     position against exit rules (stop-loss / take-profit). Exits
+     only fire once the 2-trading-day minimum hold has passed;
+     otherwise they're reported as "flagged, waiting on hold".
+  2. DISCOVERY - rotates between three strategies (see discovery.py)
+     so repeated runs aren't just re-running an identical scan:
+       core          -> standard 2-day-horizon model across the S&P 500
+       long_horizon   -> same idea, ~10-day horizon, lighter hyperparams
+       news_discovery -> shortlist from general market-news chatter,
+                          then scores that shortlist with the core model
 
-Tickers already held get checked against their sell_date and sold
-(logically - this only recommends, it does not place real trades)
-once the 2-trading-day hold is up.
+New buys are sized as a fraction of current account equity, weighted
+by a composite score (model probability + sentiment + technicals -
+see reasoning.py), capped per-position and by a max concurrent
+position count.
 
-Run with `python agent.py`. Designed to be invoked on a schedule
-by the GitHub Actions workflow in .github/workflows/agent.yml.
+If the market is closed when a buy decision is made, the order is
+queued in state.json as a deferred order instead of submitted, and
+executed automatically on a later run once the market opens.
 """
 
 import argparse
-from datetime import date
+from datetime import date, datetime
 
 import pandas as pd
 
 import stock_model as sm
 import news_sentiment as ns
 import position_tracker as pt
+import discovery
+import reasoning
+from alpaca_trader import AlpacaTrader
 from notifier import send_telegram_message, format_run_summary
 
-MODEL_PROB_THRESHOLD = 0.95   # same threshold as the original script
-SENTIMENT_VETO_THRESHOLD = -0.15  # below this, skip the buy even if model says yes
-HOLD_TRADING_DAYS = 2
-MAX_UNIVERSE = None  # set to an int (e.g. 100) to limit tickers for a faster/cheaper run
+MAX_POSITIONS = 8
+MAX_ALLOCATION_FRACTION = 0.20     # cap per position as a fraction of equity
+MIN_ORDER_DOLLARS = 250
+CASH_BUFFER_FRACTION = 0.10        # keep 10% of cash uncommitted
+
+STOP_LOSS_PCT = -0.08
+TAKE_PROFIT_PCT = 0.15
+
+MIN_HOLD_TRADING_DAYS = 2
+MAX_UNIVERSE = None  # set an int to limit the scan universe for a faster/cheaper run
 
 
-def score_ticker(ticker, hist):
+# =========================================================
+# POSITION MONITORING
+# =========================================================
+
+def check_exit_rule(unrealized_plpc):
+    if unrealized_plpc <= STOP_LOSS_PCT:
+        return f"stop-loss hit ({unrealized_plpc*100:+.2f}%)"
+    if unrealized_plpc >= TAKE_PROFIT_PCT:
+        return f"take-profit hit ({unrealized_plpc*100:+.2f}%)"
+    return None
+
+
+def monitor_positions(trader, state, today, market_open):
     """
-    Returns (prediction, prob, latest_close) or None if there's not
-    enough data. Trains on all rows except the most recent one, then
-    scores that held-out row - this is the leak fix.
+    Returns (held_positions_for_display, sells, exit_flagged_waiting).
+    Executes real sell orders (via Alpaca) when an exit rule fires and
+    the minimum hold has cleared and the market is open.
     """
-    data, predictors = sm.compute_features_from_hist(hist)
-    if data.empty or len(data) < 30:
-        return None
+    live_positions = trader.get_positions()
 
-    train_data = data.iloc[:-1]     # everything except the row being scored
-    latest_row = data.iloc[-1:]
-
-    if len(train_data) < 20:
-        return None
-
-    model = sm.train_and_evaluate_model(train_data, predictors)
-    prob = model.predict_proba(latest_row[predictors])[:, 1][0]
-    prediction = 1 if prob > MODEL_PROB_THRESHOLD else 0
-
-    latest_close = float(latest_row["Close"].iloc[0])
-
-    return prediction, float(prob), latest_close
-
-
-def run(state_path="state.json", dry_run=False):
-    today = date.today()
-    print(f"=== Agent run: {today} ===")
-
-    state = pt.load_state(state_path)
-    still_held, ready_to_sell = pt.get_active_holdings(state, today)
-
-    print(f"Currently held (within hold window): {still_held}")
-    print(f"Ready to sell today: {ready_to_sell}")
-
-    # --- Handle sells for positions whose hold period is up ---
+    held_for_display = []
     sells = []
-    if ready_to_sell:
-        sell_hist = sm.batch_fetch_history(
-            ready_to_sell,
-            pd.Timestamp(today) - pd.Timedelta(days=5),
-            pd.Timestamp(today) + pd.Timedelta(days=1),
-        )
-        for ticker in ready_to_sell:
-            info = state[ticker]
-            hist = sell_hist.get(ticker)
-            if hist is None or hist.empty:
-                print(f"{ticker}: no fresh price data to compute sell, leaving in state")
-                continue
-            sell_price = float(hist["Close"].iloc[-1])
-            buy_price = info["buy_price"]
+    exit_flagged_waiting = []
+
+    for ticker, pos in live_positions.items():
+        meta = state["positions"].get(ticker)
+        if meta is None:
+            # Position exists in Alpaca but we have no metadata for it
+            # (e.g. manually opened, or state.json was reset). Track it
+            # from today with the default hold so it isn't ignored.
+            state = pt.record_new_position(
+                state, ticker, today,
+                rationale="No prior metadata found; tracking from today.",
+                mode="unknown",
+                min_hold_trading_days=MIN_HOLD_TRADING_DAYS,
+            )
+            meta = state["positions"][ticker]
+
+        exit_reason = check_exit_rule(pos["unrealized_plpc"])
+        sellable = pt.is_sellable(state, ticker, today)
+
+        if exit_reason and sellable and market_open:
+            trader.sell_all(ticker)
             sells.append({
                 "ticker": ticker,
-                "buy_price": buy_price,
-                "sell_price": sell_price,
-                "pct_return": (sell_price / buy_price) - 1,
+                "reason": exit_reason,
+                "unrealized_plpc": pos["unrealized_plpc"],
+                "market_value": pos["market_value"],
             })
             pt.remove_position(state, ticker)
+            continue
 
-    # --- Build candidate universe (exclude anything still held) ---
-    all_tickers = sm.get_stock_tickers()
-    candidates = [t for t in all_tickers if t not in still_held and t not in ready_to_sell]
+        if exit_reason and not sellable:
+            exit_flagged_waiting.append({
+                "ticker": ticker,
+                "reason": exit_reason,
+                "min_sell_date": meta["min_sell_date"],
+            })
+
+        held_for_display.append({
+            "ticker": ticker,
+            "entry_date": meta["entry_date"],
+            "min_sell_date": meta["min_sell_date"],
+            "sellable": sellable,
+            "unrealized_plpc": pos["unrealized_plpc"],
+            "market_value": pos["market_value"],
+            "rationale": meta.get("rationale", ""),
+        })
+
+    return held_for_display, sells, exit_flagged_waiting
+
+
+# =========================================================
+# DEFERRED ORDER EXECUTION
+# =========================================================
+
+def execute_deferred_orders(trader, state, today, mode_label="deferred"):
+    """
+    If the market is open, submits any orders that were queued while
+    it was closed. Returns the list of newly-executed buys (same
+    shape as fresh buys) for the notification.
+    """
+    executed = []
+    pending = state["deferred_orders"]
+    if not pending:
+        return executed
+
+    still_pending = []
+    for order in pending:
+        try:
+            trader.buy_notional(order["ticker"], order["dollar_amount"])
+            state = pt.record_new_position(
+                state, order["ticker"], today,
+                rationale=order["rationale"] + " (executed from deferred queue)",
+                mode=order.get("mode", mode_label),
+                min_hold_trading_days=MIN_HOLD_TRADING_DAYS,
+            )
+            executed.append({
+                "ticker": order["ticker"],
+                "dollar_amount": order["dollar_amount"],
+                "score": None,
+                "rationale": order["rationale"] + " (was deferred)",
+            })
+        except Exception as e:
+            print(f"[deferred] failed to execute {order['ticker']}: {e}")
+            still_pending.append(order)
+
+    state["deferred_orders"] = still_pending
+    return executed
+
+
+# =========================================================
+# DISCOVERY
+# =========================================================
+
+def run_discovery(mode, all_tickers, excluded_tickers):
+    """Always returns (flagged_dict, scanned_count)."""
+    candidates = [t for t in all_tickers if t not in excluded_tickers]
     if MAX_UNIVERSE:
         candidates = candidates[:MAX_UNIVERSE]
 
-    print(f"Scoring {len(candidates)} candidate tickers...")
+    if mode == "news_discovery":
+        flagged = discovery.scan_news_discovery(candidates)
+        return flagged, len(candidates)
 
-    # Batch price fetch (one request for everything, not one per ticker)
-    start_date = pd.Timestamp(today) - pd.Timedelta(days=365 * 5)
-    end_date_exclusive = pd.Timestamp(today) + pd.Timedelta(days=1)
+    start_date = pd.Timestamp.today() - pd.Timedelta(days=365 * 5)
+    end_date_exclusive = pd.Timestamp.today() + pd.Timedelta(days=1)
     hist_by_ticker = sm.batch_fetch_history(candidates, start_date, end_date_exclusive)
 
-    # Pre-filter to tickers the model likes, THEN fetch news only for
-    # those - this avoids doing ~500 RSS fetches every run.
-    model_buys = {}
-    for ticker, hist in hist_by_ticker.items():
-        try:
-            result = score_ticker(ticker, hist)
-        except Exception as e:
-            print(f"{ticker}: scoring failed ({e})")
-            continue
-        if result is None:
-            continue
-        prediction, prob, latest_close = result
-        if prediction == 1:
-            model_buys[ticker] = (prob, latest_close)
+    if mode == "long_horizon":
+        return discovery.scan_long_horizon(hist_by_ticker), len(candidates)
+    return discovery.scan_core(hist_by_ticker), len(candidates)
 
-    print(f"Model flagged {len(model_buys)} tickers: {list(model_buys.keys())}")
 
-    # --- News sentiment veto, only for model-flagged tickers ---
-    sentiments = ns.get_sentiment_batch(list(model_buys.keys()))
+# =========================================================
+# SIZING
+# =========================================================
 
-    buys = []
-    for ticker, (prob, latest_close) in model_buys.items():
-        sent_info = sentiments.get(ticker, {})
-        mean_compound = sent_info.get("mean_compound")
+def size_positions(scored_candidates, account, num_slots):
+    """
+    scored_candidates: list of dicts with ticker, score, rationale, mode
+    Returns the subset to actually buy with a dollar_amount each,
+    proportional to score, capped per-position, within a cash budget.
+    """
+    if num_slots <= 0 or not scored_candidates:
+        return []
 
-        if mean_compound is not None and mean_compound < SENTIMENT_VETO_THRESHOLD:
-            print(f"{ticker}: model said buy but sentiment vetoed it "
-                  f"({mean_compound:.2f})")
-            continue
+    ranked = sorted(scored_candidates, key=lambda c: c["score"], reverse=True)[:num_slots]
 
-        buys.append({
+    equity = account["equity"]
+    budget = account["cash"] * (1 - CASH_BUFFER_FRACTION)
+    max_per_position = equity * MAX_ALLOCATION_FRACTION
+
+    total_score = sum(c["score"] for c in ranked) or 1.0
+    sized = []
+    for c in ranked:
+        raw_share = budget * (c["score"] / total_score)
+        dollar_amount = max(MIN_ORDER_DOLLARS, min(raw_share, max_per_position))
+        sized.append({**c, "dollar_amount": dollar_amount})
+
+    # If proportional sizing overshoots the budget (can happen once
+    # capping kicks in), scale everything down together.
+    total_requested = sum(c["dollar_amount"] for c in sized)
+    if total_requested > budget and total_requested > 0:
+        scale = budget / total_requested
+        for c in sized:
+            c["dollar_amount"] = max(MIN_ORDER_DOLLARS, c["dollar_amount"] * scale)
+
+    return [c for c in sized if c["dollar_amount"] >= MIN_ORDER_DOLLARS]
+
+
+# =========================================================
+# MAIN
+# =========================================================
+
+def run(state_path="state.json", dry_run=False):
+    today = date.today()
+    now = datetime.now()
+    print(f"=== Agent run: {now.isoformat()} ===")
+
+    trader = AlpacaTrader()
+    clock = trader.get_clock()
+    account = trader.get_account_summary()
+    market_open = clock["is_open"]
+
+    print(f"Market open: {market_open} | Equity: ${account['equity']:,.2f}")
+
+    state = pt.load_state(state_path)
+
+    # --- Execute any deferred orders now that we know market status ---
+    executed_deferred = []
+    if market_open:
+        executed_deferred = execute_deferred_orders(trader, state, today)
+
+    # --- Position monitoring (every run) ---
+    held_positions, sells, exit_flagged_waiting = monitor_positions(
+        trader, state, today, market_open
+    )
+    held_tickers = {p["ticker"] for p in held_positions}
+
+    # --- Discovery (rotating mode) ---
+    mode = pt.next_mode_and_increment(state, discovery.MODES)
+    all_tickers = sm.get_stock_tickers()
+
+    flagged, scanned_count = run_discovery(mode, all_tickers, held_tickers)
+
+    print(f"Mode: {mode} | Scanned {scanned_count} | Flagged {len(flagged)} tickers")
+
+    # --- Sentiment + composite reasoning for flagged tickers ---
+    sentiments = ns.get_sentiment_batch(list(flagged.keys()))
+
+    scored_candidates = []
+    for ticker, (prob, latest_row) in flagged.items():
+        evaluation = reasoning.evaluate(ticker, prob, sentiments.get(ticker), latest_row, mode)
+        scored_candidates.append({
             "ticker": ticker,
-            "model_prob": prob,
-            "sentiment": mean_compound,
-            "price": latest_close,
+            "score": evaluation["score"],
+            "rationale": evaluation["rationale"],
+            "mode": mode,
         })
 
-        if not dry_run:
-            pt.add_position(
-                state, ticker, today,
-                buy_price=latest_close,
-                model_prob=prob,
-                sentiment=mean_compound,
-                hold_trading_days=HOLD_TRADING_DAYS,
-            )
+    # --- Sizing + execution ---
+    num_slots = MAX_POSITIONS - len(held_tickers)
+    to_buy = size_positions(scored_candidates, account, num_slots)
+
+    new_buys = list(executed_deferred)
+    deferred_buys = []
+
+    for candidate in to_buy:
+        ticker = candidate["ticker"]
+        if market_open:
+            try:
+                if not dry_run:
+                    trader.buy_notional(ticker, candidate["dollar_amount"])
+                    pt.record_new_position(
+                        state, ticker, today,
+                        rationale=candidate["rationale"],
+                        mode=candidate["mode"],
+                        min_hold_trading_days=MIN_HOLD_TRADING_DAYS,
+                    )
+                new_buys.append(candidate)
+            except Exception as e:
+                print(f"[buy] failed for {ticker}: {e}")
+        else:
+            if not dry_run:
+                pt.queue_deferred_order(
+                    state, ticker, candidate["dollar_amount"], candidate["rationale"],
+                    candidate["mode"], now, clock["next_open"],
+                )
+            deferred_buys.append({
+                **candidate,
+                "target_time": clock["next_open"].strftime("%Y-%m-%d %H:%M %Z") if clock["next_open"] else "next open",
+            })
 
     if not dry_run:
         pt.save_state(state, state_path)
 
     summary = format_run_summary(
-        buys=buys,
+        run_date_str=now.strftime("%Y-%m-%d %H:%M"),
+        market_open=market_open,
+        mode=mode,
+        account=account,
+        held_positions=held_positions,
+        new_buys=new_buys,
+        deferred_buys=deferred_buys,
         sells=sells,
-        skipped_count=len(still_held),
-        run_date=today.strftime("%Y-%m-%d"),
+        exit_flagged_waiting=exit_flagged_waiting,
+        candidates_scanned=scanned_count,
     )
     print(summary)
     send_telegram_message(summary)
 
-    return buys, sells
+    return {
+        "held_positions": held_positions,
+        "new_buys": new_buys,
+        "deferred_buys": deferred_buys,
+        "sells": sells,
+    }
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--state", default="state.json")
     parser.add_argument("--dry-run", action="store_true",
-                         help="Score and notify but don't write state.json")
+                         help="Score and notify but don't submit orders or write state.json")
     args = parser.parse_args()
 
     run(state_path=args.state, dry_run=args.dry_run)
