@@ -103,6 +103,9 @@ def is_sellable(state, ticker, today):
 
 
 def queue_deferred_order(state, ticker, dollar_amount, rationale, mode, now, next_open):
+    for i in state["deferred_orders"]:
+      if i["ticker"] == ticker:
+        return state
     state["deferred_orders"].append({
         "ticker": ticker,
         "dollar_amount": round(dollar_amount, 2),
