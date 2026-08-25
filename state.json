@@ -1,1 +1,14 @@
-
+{
+  "positions": {
+    "EVRG": {
+      "entry_date": "2026-08-25",
+      "min_sell_date": "2026-08-27",
+      "rationale": "Price model: 95% confidence (mode: core). News sentiment mixed/neutral (+0.14). Technicals lean bearish (score 0.19). Sample headline: \"Can Economic Development Drive EVRG's Long-Term Earnings Growth?\"",
+      "mode": "core"
+    }
+  },
+  "deferred_orders": [],
+  "meta": {
+    "run_counter": 1
+  }
+}
