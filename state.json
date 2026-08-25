@@ -5,5 +5,19 @@
     "buy_price": 283.48,
     "model_prob": 0.9754,
     "sentiment": 0.2405
+  },
+  "positions": {},
+  "deferred_orders": [
+    {
+      "ticker": "HWM",
+      "dollar_amount": 20000.0,
+      "rationale": "Price model: 98% confidence (mode: core). News sentiment positive (+0.24). Technicals lean bullish (score 0.69). Sample headline: \"Do Howmet's Strong Q2 Margins Signal Further Upside for the Stock?\"",
+      "mode": "core",
+      "queued_at": "2026-08-25T01:32:52.204001",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    }
+  ],
+  "meta": {
+    "run_counter": 1
   }
 }
