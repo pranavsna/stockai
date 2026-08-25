@@ -375,9 +375,73 @@
       "mode": "core",
       "queued_at": "2026-08-25T11:15:32.155861",
       "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "EXPD",
+      "dollar_amount": 11548.87,
+      "rationale": "Price model: 98% confidence (mode: long_horizon). News sentiment positive (+0.29). Technicals lean bullish (score 0.94). Sample headline: \"Why Expeditors International Of Washington (EXPD) Is Back In The Spotlight\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "HPE",
+      "dollar_amount": 11327.22,
+      "rationale": "Price model: 99% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.10). Technicals lean bullish (score 0.94). Sample headline: \"Buy These 3 Pure-Play Server Stocks to Benefit From AI Data Center Boom\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "JNJ",
+      "dollar_amount": 11277.95,
+      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.22). Technicals lean bullish (score 0.94). Sample headline: \"5 Dividend Aristocrats Boomers Should Own for Life\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "HWM",
+      "dollar_amount": 11264.17,
+      "rationale": "Price model: 94% confidence (mode: long_horizon). News sentiment positive (+0.26). Technicals lean bullish (score 0.94). Sample headline: \"Do Howmet's Strong Q2 Margins Signal Further Upside for the Stock?\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "JPM",
+      "dollar_amount": 11216.81,
+      "rationale": "Price model: 97% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.12). Technicals lean bullish (score 0.94). Sample headline: \"Should JPMorgan Diversified Return U.S. Mid Cap Equity ETF (JPME) Be on Your Investing Radar?\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "RF",
+      "dollar_amount": 11205.92,
+      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.19). Technicals lean bullish (score 0.94). Sample headline: \"Regions Financial (RF) Stock Could Trade At A 48% Discount On Earnings Power\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "PFG",
+      "dollar_amount": 11088.82,
+      "rationale": "Price model: 94% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.14). Technicals lean bullish (score 0.94). Sample headline: \"Principal Financial Group (PFG) Rallies As Fair Value Debate Tightens\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
+    },
+    {
+      "ticker": "SOLV",
+      "dollar_amount": 11070.23,
+      "rationale": "Price model: 91% confidence (mode: long_horizon). News sentiment positive (+0.25). Technicals lean bullish (score 0.94). Sample headline: \"1 Healthcare Stock for Long-Term Investors and 2 Facing Challenges\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-25T11:46:56.651085",
+      "target_time": "2026-08-25T09:30:00-04:00"
     }
   ],
   "meta": {
-    "run_counter": 16
+    "run_counter": 17
   }
 }
