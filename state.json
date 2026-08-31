@@ -43,8 +43,17 @@
       "mode": "long_horizon"
     }
   },
-  "deferred_orders": [],
+  "deferred_orders": [
+    {
+      "ticker": "EOG",
+      "dollar_amount": 15628.98,
+      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.28). Technicals lean bullish (score 0.94). Sample headline: \"Ezra Yacob, CEO of EOG Resources, to Speak at SUPER DUG\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-08-31T21:53:34.535694",
+      "target_time": "2026-09-01T09:30:00-04:00"
+    }
+  ],
   "meta": {
-    "run_counter": 49
+    "run_counter": 50
   }
 }
