@@ -30,12 +30,6 @@
       "rationale": "Price model: 92% confidence (mode: long_horizon). News sentiment positive (+0.36). Technicals lean bullish (score 0.94). Sample headline: \"Cenovus vs. Phillips 66: Which Energy Stock Is the Better Buy?\"",
       "mode": "long_horizon"
     },
-    "HWM": {
-      "entry_date": "2026-08-25",
-      "min_sell_date": "2026-08-27",
-      "rationale": "Price model: 94% confidence (mode: long_horizon). News sentiment positive (+0.26). Technicals lean bullish (score 0.94). Sample headline: \"Do Howmet's Strong Q2 Margins Signal Further Upside for the Stock?\"",
-      "mode": "long_horizon"
-    },
     "IVZ": {
       "entry_date": "2026-08-25",
       "min_sell_date": "2026-08-27",
@@ -51,6 +45,6 @@
   },
   "deferred_orders": [],
   "meta": {
-    "run_counter": 48
+    "run_counter": 49
   }
 }
