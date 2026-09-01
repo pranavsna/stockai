@@ -41,35 +41,28 @@
       "min_sell_date": "2026-08-27",
       "rationale": "Price model: 93% confidence (mode: long_horizon). News sentiment positive (+0.27). Technicals lean bullish (score 0.94). Sample headline: \"Wall Street Analysts See Valero Energy (VLO) as a Buy: Should You Invest?\"",
       "mode": "long_horizon"
+    },
+    "EOG": {
+      "entry_date": "2026-09-01",
+      "min_sell_date": "2026-09-03",
+      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.28). Technicals lean bullish (score 0.94). Sample headline: \"Ezra Yacob, CEO of EOG Resources, to Speak at SUPER DUG\" (executed from deferred queue)",
+      "mode": "long_horizon"
+    },
+    "NSC": {
+      "entry_date": "2026-09-01",
+      "min_sell_date": "2026-09-03",
+      "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.16). Technicals lean bullish (score 0.94). Sample headline: \"Union Pacific (UNP) is Winning the Railroad Race. Can Norfolk Southern (NSC) Catch Up through the Me\" (executed from deferred queue)",
+      "mode": "core"
+    },
+    "FTNT": {
+      "entry_date": "2026-09-01",
+      "min_sell_date": "2026-09-03",
+      "rationale": "Price model: 97% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.12). Technicals lean bullish (score 0.94). Sample headline: \"Fortinet Launches Free High School Cybersecurity Curriculum to Build the Next Generation of Cyber De\" (executed from deferred queue)",
+      "mode": "long_horizon"
     }
   },
-  "deferred_orders": [
-    {
-      "ticker": "EOG",
-      "dollar_amount": 15628.98,
-      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.28). Technicals lean bullish (score 0.94). Sample headline: \"Ezra Yacob, CEO of EOG Resources, to Speak at SUPER DUG\"",
-      "mode": "long_horizon",
-      "queued_at": "2026-08-31T21:53:34.535694",
-      "target_time": "2026-09-01T09:30:00-04:00"
-    },
-    {
-      "ticker": "NSC",
-      "dollar_amount": 15628.98,
-      "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.16). Technicals lean bullish (score 0.94). Sample headline: \"Union Pacific (UNP) is Winning the Railroad Race. Can Norfolk Southern (NSC) Catch Up through the Me\"",
-      "mode": "core",
-      "queued_at": "2026-09-01T05:46:06.224584",
-      "target_time": "2026-09-01T09:30:00-04:00"
-    },
-    {
-      "ticker": "FTNT",
-      "dollar_amount": 15628.78,
-      "rationale": "Price model: 97% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.12). Technicals lean bullish (score 0.94). Sample headline: \"Fortinet Launches Free High School Cybersecurity Curriculum to Build the Next Generation of Cyber De\"",
-      "mode": "long_horizon",
-      "queued_at": "2026-09-01T10:30:18.971780",
-      "target_time": "2026-09-01T09:30:00-04:00"
-    }
-  ],
+  "deferred_orders": [],
   "meta": {
-    "run_counter": 53
+    "run_counter": 54
   }
 }
