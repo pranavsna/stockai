@@ -51,9 +51,17 @@
       "mode": "long_horizon",
       "queued_at": "2026-08-31T21:53:34.535694",
       "target_time": "2026-09-01T09:30:00-04:00"
+    },
+    {
+      "ticker": "NSC",
+      "dollar_amount": 15628.98,
+      "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.16). Technicals lean bullish (score 0.94). Sample headline: \"Union Pacific (UNP) is Winning the Railroad Race. Can Norfolk Southern (NSC) Catch Up through the Me\"",
+      "mode": "core",
+      "queued_at": "2026-09-01T05:46:06.224584",
+      "target_time": "2026-09-01T09:30:00-04:00"
     }
   ],
   "meta": {
-    "run_counter": 51
+    "run_counter": 52
   }
 }
