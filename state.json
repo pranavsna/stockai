@@ -59,9 +59,17 @@
       "mode": "core",
       "queued_at": "2026-09-01T05:46:06.224584",
       "target_time": "2026-09-01T09:30:00-04:00"
+    },
+    {
+      "ticker": "FTNT",
+      "dollar_amount": 15628.78,
+      "rationale": "Price model: 97% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.12). Technicals lean bullish (score 0.94). Sample headline: \"Fortinet Launches Free High School Cybersecurity Curriculum to Build the Next Generation of Cyber De\"",
+      "mode": "long_horizon",
+      "queued_at": "2026-09-01T10:30:18.971780",
+      "target_time": "2026-09-01T09:30:00-04:00"
     }
   ],
   "meta": {
-    "run_counter": 52
+    "run_counter": 53
   }
 }
