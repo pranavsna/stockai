@@ -30,12 +30,6 @@
       "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.28). Technicals lean bullish (score 0.94). Sample headline: \"Ezra Yacob, CEO of EOG Resources, to Speak at SUPER DUG\" (executed from deferred queue)",
       "mode": "long_horizon"
     },
-    "NSC": {
-      "entry_date": "2026-09-01",
-      "min_sell_date": "2026-09-03",
-      "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.16). Technicals lean bullish (score 0.94). Sample headline: \"Union Pacific (UNP) is Winning the Railroad Race. Can Norfolk Southern (NSC) Catch Up through the Me\" (executed from deferred queue)",
-      "mode": "core"
-    },
     "FTNT": {
       "entry_date": "2026-09-01",
       "min_sell_date": "2026-09-03",
@@ -51,6 +45,6 @@
   },
   "deferred_orders": [],
   "meta": {
-    "run_counter": 150
+    "run_counter": 151
   }
 }
