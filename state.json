@@ -30,12 +30,6 @@
       "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.28). Technicals lean bullish (score 0.94). Sample headline: \"Ezra Yacob, CEO of EOG Resources, to Speak at SUPER DUG\" (executed from deferred queue)",
       "mode": "long_horizon"
     },
-    "FTNT": {
-      "entry_date": "2026-09-01",
-      "min_sell_date": "2026-09-03",
-      "rationale": "Price model: 97% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.12). Technicals lean bullish (score 0.94). Sample headline: \"Fortinet Launches Free High School Cybersecurity Curriculum to Build the Next Generation of Cyber De\" (executed from deferred queue)",
-      "mode": "long_horizon"
-    },
     "AES": {
       "entry_date": "2026-09-21",
       "min_sell_date": "2026-09-23",
@@ -47,10 +41,16 @@
       "min_sell_date": "2026-09-24",
       "rationale": "Price model: 93% confidence (mode: long_horizon). News sentiment positive (+0.21). Technicals lean bullish (score 0.94). Sample headline: \"The Zacks Analyst Blog Highlights Valero, Phillips 66 and Eni\"",
       "mode": "long_horizon"
+    },
+    "ALL": {
+      "entry_date": "2026-10-06",
+      "min_sell_date": "2026-10-08",
+      "rationale": "Price model: 95% confidence (mode: core). News sentiment mixed/neutral (+0.06). Technicals lean bearish (score 0.12). Sample headline: \"What is the Auto Lab at Allstate Claims University? How Allstate trains auto claims adjusters on mod\"",
+      "mode": "core"
     }
   },
   "deferred_orders": [],
   "meta": {
-    "run_counter": 207
+    "run_counter": 208
   }
 }
