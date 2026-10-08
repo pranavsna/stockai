@@ -18,12 +18,6 @@
       "rationale": "Price model: 94% confidence (mode: long_horizon). News sentiment positive (+0.26). Technicals lean bullish (score 0.94). Sample headline: \"J&J\u2019s Imaavy secures expanded US approval in rare blood disorder\"",
       "mode": "long_horizon"
     },
-    "PSX": {
-      "entry_date": "2026-08-25",
-      "min_sell_date": "2026-08-27",
-      "rationale": "Price model: 92% confidence (mode: long_horizon). News sentiment positive (+0.36). Technicals lean bullish (score 0.94). Sample headline: \"Cenovus vs. Phillips 66: Which Energy Stock Is the Better Buy?\"",
-      "mode": "long_horizon"
-    },
     "EOG": {
       "entry_date": "2026-09-01",
       "min_sell_date": "2026-09-03",
@@ -36,21 +30,21 @@
       "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.27). Technicals lean bullish (score 0.94). Sample headline: \"Why Is AES (AES) Up 0.7% Since Last Earnings Report?\"",
       "mode": "long_horizon"
     },
-    "VLO": {
-      "entry_date": "2026-09-22",
-      "min_sell_date": "2026-09-24",
-      "rationale": "Price model: 93% confidence (mode: long_horizon). News sentiment positive (+0.21). Technicals lean bullish (score 0.94). Sample headline: \"The Zacks Analyst Blog Highlights Valero, Phillips 66 and Eni\"",
-      "mode": "long_horizon"
-    },
     "ALL": {
       "entry_date": "2026-10-06",
       "min_sell_date": "2026-10-08",
       "rationale": "Price model: 95% confidence (mode: core). News sentiment mixed/neutral (+0.06). Technicals lean bearish (score 0.12). Sample headline: \"What is the Auto Lab at Allstate Claims University? How Allstate trains auto claims adjusters on mod\"",
       "mode": "core"
+    },
+    "AAPL": {
+      "entry_date": "2026-10-08",
+      "min_sell_date": "2026-10-12",
+      "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.16). Technicals lean bullish (score 0.94). Sample headline: \"Apple (AAPL) Stock Trades Above Fair Value On Cash Flow Estimates\"",
+      "mode": "core"
     }
   },
   "deferred_orders": [],
   "meta": {
-    "run_counter": 216
+    "run_counter": 217
   }
 }
