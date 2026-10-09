@@ -41,19 +41,16 @@
       "min_sell_date": "2026-10-12",
       "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.16). Technicals lean bullish (score 0.94). Sample headline: \"Apple (AAPL) Stock Trades Above Fair Value On Cash Flow Estimates\"",
       "mode": "core"
+    },
+    "BBY": {
+      "entry_date": "2026-10-09",
+      "min_sell_date": "2026-10-13",
+      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.45). Technicals lean bullish (score 0.94). Sample headline: \"Best Buy's Ads & Marketplace Expansion Opens New Growth Opportunities\" (executed from deferred queue)",
+      "mode": "long_horizon"
     }
   },
-  "deferred_orders": [
-    {
-      "ticker": "BBY",
-      "dollar_amount": 13704.97,
-      "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.45). Technicals lean bullish (score 0.94). Sample headline: \"Best Buy's Ads & Marketplace Expansion Opens New Growth Opportunities\"",
-      "mode": "long_horizon",
-      "queued_at": "2026-10-08T20:06:31.260984",
-      "target_time": "2026-10-09T09:30:00-04:00"
-    }
-  ],
+  "deferred_orders": [],
   "meta": {
-    "run_counter": 221
+    "run_counter": 222
   }
 }
