@@ -43,14 +43,14 @@
       "mode": "long_horizon"
     },
     "FTNT": {
-      "entry_date": "2026-10-13",
-      "min_sell_date": "2026-10-15",
-      "rationale": "Price model: 98% confidence (mode: long_horizon). News sentiment positive (+0.27). Technicals lean bullish (score 0.94). Sample headline: \"Is Fortinet\u2019s AI Security Push and GovWare 2026 Spotlight Reshaping the Investment Case for FTNT?\"",
+      "entry_date": "2026-10-16",
+      "min_sell_date": "2026-10-20",
+      "rationale": "Price model: 99% confidence (mode: long_horizon). News sentiment positive (+0.19). Technicals lean bullish (score 0.94). Sample headline: \"3 Reasons Why Growth Investors Shouldn't Overlook Fortinet (FTNT)\"",
       "mode": "long_horizon"
     }
   },
   "deferred_orders": [],
   "meta": {
-    "run_counter": 247
+    "run_counter": 248
   }
 }
