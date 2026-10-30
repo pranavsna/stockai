@@ -24,12 +24,6 @@
       "rationale": "Price model: 95% confidence (mode: long_horizon). News sentiment positive (+0.27). Technicals lean bullish (score 0.94). Sample headline: \"Why Is AES (AES) Up 0.7% Since Last Earnings Report?\"",
       "mode": "long_horizon"
     },
-    "ALL": {
-      "entry_date": "2026-10-06",
-      "min_sell_date": "2026-10-08",
-      "rationale": "Price model: 95% confidence (mode: core). News sentiment mixed/neutral (+0.06). Technicals lean bearish (score 0.12). Sample headline: \"What is the Auto Lab at Allstate Claims University? How Allstate trains auto claims adjusters on mod\"",
-      "mode": "core"
-    },
     "AAPL": {
       "entry_date": "2026-10-08",
       "min_sell_date": "2026-10-12",
@@ -47,10 +41,16 @@
       "min_sell_date": "2026-11-02",
       "rationale": "Price model: 97% confidence (mode: core). News sentiment positive (+0.20). Technicals lean bullish (score 0.69). Sample headline: \"S&P lowers Lamb Weston rating to \u2019BB\u2019 with stable outlook amid elevated debt\"",
       "mode": "core"
+    },
+    "ABBV": {
+      "entry_date": "2026-10-30",
+      "min_sell_date": "2026-11-03",
+      "rationale": "Price model: 99% confidence (mode: long_horizon). News sentiment mixed/neutral (+0.11). Technicals lean bullish (score 0.94). Sample headline: \"AbbVie's Earnings Double As Immunology Powerhouse Skyrizi Beats Again\"",
+      "mode": "long_horizon"
     }
   },
   "deferred_orders": [],
   "meta": {
-    "run_counter": 301
+    "run_counter": 302
   }
 }
