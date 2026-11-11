@@ -43,8 +43,17 @@
       "mode": "long_horizon"
     }
   },
-  "deferred_orders": [],
+  "deferred_orders": [
+    {
+      "ticker": "V",
+      "dollar_amount": 15513.82,
+      "rationale": "Price model: 96% confidence (mode: core). News sentiment positive (+0.20). Technicals lean bullish (score 0.94). Sample headline: \"Monad Is Now a Settlement Option in Visa\u2019s Stablecoin Program\"",
+      "mode": "core",
+      "queued_at": "2026-11-11T00:34:22.183575",
+      "target_time": "2026-11-11T09:30:00-05:00"
+    }
+  ],
   "meta": {
-    "run_counter": 330
+    "run_counter": 331
   }
 }
